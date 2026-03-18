@@ -71,6 +71,7 @@
 | `droid` | Droid | `.factory/skills` | `.factory` |
 | `windsurf` | Windsurf | `.codeium/windsurf/skills` | `.codeium/windsurf` |
 | `moltbot` | MoltBot | `.moltbot/skills` | `.moltbot` |
+| `codeflicker` | CodeFlicker | `.codeflicker/skills` | `.codeflicker` |
 
 完整路径规则与检测逻辑见 [`src-tauri/src/core/tool_adapters/mod.rs`](../src-tauri/src/core/tool_adapters/mod.rs)。
 
