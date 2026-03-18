@@ -16,7 +16,7 @@ use crate::core::featured_skills::{fetch_featured_skills, FeaturedSkill};
 use crate::core::github_search::{search_github_repos, RepoSummary};
 use crate::core::installer::{
     install_git_skill, install_git_skill_from_selection, install_local_skill,
-    install_local_skill_from_selection, list_git_skills, list_local_skills,
+    install_local_skill_from_selection, is_loose_skill_dir, list_git_skills, list_local_skills,
     update_managed_skill_from_source, GitSkillCandidate, InstallResult, LocalSkillCandidate,
 };
 use crate::core::onboarding::{build_onboarding_plan, OnboardingPlan};
@@ -705,7 +705,9 @@ pub async fn import_existing_skill(
         let source = std::path::Path::new(&sourcePath);
         // Validate SKILL.md exists before importing (fixes #8: prevents importing
         // directories that were "discovered" but lack a valid SKILL.md).
-        if !source.join("SKILL.md").exists() {
+        // Exception: dirs under loose-skill-dir tools (e.g. .claude/skills/, .codeflicker/skills/)
+        // do not require SKILL.md.
+        if !is_loose_skill_dir(source) && !source.join("SKILL.md").exists() {
             anyhow::bail!("SKILL_INVALID|missing_skill_md");
         }
         let result = install_local_skill(&app, &store, source, name)?;

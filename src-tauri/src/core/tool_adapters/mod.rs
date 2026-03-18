@@ -45,6 +45,7 @@ pub enum ToolId {
     Droid,
     Windsurf,
     Moltbot,
+    CodeFlicker,
 }
 
 impl ToolId {
@@ -91,6 +92,7 @@ impl ToolId {
             ToolId::Droid => "droid",
             ToolId::Windsurf => "windsurf",
             ToolId::Moltbot => "moltbot",
+            ToolId::CodeFlicker => "codeflicker",
         }
     }
 }
@@ -400,6 +402,13 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             // add-skill global path: ~/.moltbot/skills/
             relative_skills_dir: ".moltbot/skills",
             relative_detect_dir: ".moltbot",
+        },
+        ToolAdapter {
+            id: ToolId::CodeFlicker,
+            display_name: "CodeFlicker",
+            // add-skill global path: ~/.codeflicker/skills/
+            relative_skills_dir: ".codeflicker/skills",
+            relative_detect_dir: ".codeflicker",
         },
     ]
 }

@@ -74,6 +74,7 @@ A cross-platform desktop app (Tauri + React) to manage Agent Skills in one place
 | `droid` | Droid | `.factory/skills` | `.factory` |
 | `windsurf` | Windsurf | `.codeium/windsurf/skills` | `.codeium/windsurf` |
 | `moltbot` | MoltBot | `.moltbot/skills` | `.moltbot` |
+| `codeflicker` | CodeFlicker | `.codeflicker/skills` | `.codeflicker` |
 
 ## Development
 
