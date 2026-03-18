@@ -460,7 +460,9 @@ pub fn scan_tool_dir(tool: &ToolAdapter, dir: &Path) -> Result<Vec<DetectedSkill
         }
 
         let name = entry.file_name().to_string_lossy().to_string();
-        if tool.id == ToolId::Codex && name == ".system" {
+        // Skip hidden directories (names starting with '.') — these are internal/system dirs
+        // such as .staging, .curated, .system, .cache, etc. and should not be treated as skills.
+        if name.starts_with('.') {
             continue;
         }
         let (is_link, link_target) = detect_link(&path);
