@@ -435,21 +435,37 @@ const SKILL_SCAN_BASES: [&str; 5] = [
     ".claude/skills",
 ];
 
-/// Check if a directory is a valid skill (has SKILL.md or is under .claude/skills/).
+/// Tools whose skill dirs do NOT require SKILL.md (e.g. Claude plugins, CodeFlicker skills).
+const LOOSE_SKILL_DIR_SUFFIXES: &[&str] = &[
+    ".claude/skills",
+    ".claude\\skills",
+    ".codeflicker/skills",
+    ".codeflicker\\skills",
+];
+
+/// Check if a directory is a valid skill (has SKILL.md or is in a loose-skill-dir tool path).
 fn is_skill_dir(p: &Path) -> bool {
-    p.is_dir() && (p.join("SKILL.md").exists() || is_claude_skill_dir(p))
+    p.is_dir() && (p.join("SKILL.md").exists() || is_loose_skill_dir(p))
 }
 
-/// Check if a directory is a Claude plugin skill (under .claude/skills/ without SKILL.md).
-fn is_claude_skill_dir(p: &Path) -> bool {
-    // A directory under .claude/skills/ is treated as a valid skill even without SKILL.md
+/// Check if a directory is under a tool skills dir that does NOT require SKILL.md.
+/// Currently: `.claude/skills/` and `.codeflicker/skills/`.
+pub(crate) fn is_loose_skill_dir(p: &Path) -> bool {
     if let Some(parent) = p.parent() {
         let parent_str = parent.to_string_lossy();
-        if parent_str.ends_with(".claude/skills") || parent_str.ends_with(".claude\\skills") {
-            return p.is_dir();
+        for suffix in LOOSE_SKILL_DIR_SUFFIXES {
+            if parent_str.ends_with(suffix) {
+                return p.is_dir();
+            }
         }
     }
     false
+}
+
+/// Kept for compatibility — delegates to is_loose_skill_dir.
+#[allow(dead_code)]
+fn is_claude_skill_dir(p: &Path) -> bool {
+    is_loose_skill_dir(p)
 }
 
 /// Try to read the description for a skill from .claude-plugin/plugin.json.
@@ -980,8 +996,9 @@ pub fn list_local_skills(base_path: &Path) -> Result<Vec<LocalSkillCandidate>> {
                             });
                         }
                     }
-                } else if is_claude_skill_dir(&p) {
-                    // .claude/skills/* directories are valid without SKILL.md
+                } else if is_loose_skill_dir(&p) {
+                    // loose-skill-dir tools (e.g. .claude/skills/, .codeflicker/skills/) are
+                    // valid without SKILL.md
                     let name = p
                         .file_name()
                         .unwrap_or_default()
@@ -1138,11 +1155,21 @@ pub fn install_local_skill_from_selection<R: tauri::Runtime>(
     }
 
     let skill_md = selected_dir.join("SKILL.md");
-    if !skill_md.exists() {
+    // Loose-skill-dir tools (e.g. .claude/skills/, .codeflicker/skills/) don't require SKILL.md.
+    if !is_loose_skill_dir(&selected_dir) && !skill_md.exists() {
         anyhow::bail!("SKILL_INVALID|missing_skill_md");
     }
-    let (parsed_name, _desc) = parse_skill_md_with_reason(&skill_md)
-        .map_err(|reason| anyhow::anyhow!("SKILL_INVALID|{}", reason))?;
+    let (parsed_name, _desc) = if skill_md.exists() {
+        parse_skill_md_with_reason(&skill_md)
+            .map_err(|reason| anyhow::anyhow!("SKILL_INVALID|{}", reason))?
+    } else {
+        // Loose skill without SKILL.md: derive name from directory
+        let name = selected_dir
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_else(|| "unnamed-skill".to_string());
+        (name, None)
+    };
 
     let display_name = name.unwrap_or(parsed_name);
 
